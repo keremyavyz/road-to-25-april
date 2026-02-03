@@ -3,6 +3,7 @@ import random
 import time
 import base64
 import os
+from pathlib import Path
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(
@@ -23,6 +24,32 @@ st.markdown("""
         background-attachment: fixed;
     }
 
+    /* --- İLERLEME BARI --- */
+    .progress-container {
+        width: 100%;
+        max-width: 450px;
+        margin: 20px auto;
+        background: rgba(255,255,255,0.6);
+        border-radius: 20px;
+        padding: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .progress-bar {
+        height: 12px;
+        background: linear-gradient(90deg, #be123c, #db2777);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+        box-shadow: 0 2px 8px rgba(190, 18, 60, 0.4);
+    }
+    .progress-text {
+        text-align: center;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 13px;
+        color: #be123c;
+        margin-top: 8px;
+        font-weight: 600;
+    }
+
     /* --- GİRİŞ EKRANI (BAŞLANGIÇ) --- */
     .start-screen-box {
         background: rgba(255, 255, 255, 0.95);
@@ -39,6 +66,10 @@ st.markdown("""
         color: #be123c;
         font-size: 36px;
         margin-bottom: 10px;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     /* --- ARA GEÇİŞ (PASLAŞMA) EKRANI --- */
@@ -70,7 +101,7 @@ st.markdown("""
 
     .white-card-box {
         background: #ffffff;
-        padding: 40px 25px 60px 25px; /* Alt boşluk sticker için artırıldı */
+        padding: 40px 25px 60px 25px;
         border-radius: 20px;
         box-shadow: 
             0 15px 35px rgba(190, 18, 60, 0.15),
@@ -79,11 +110,11 @@ st.markdown("""
         border: 2px solid #d4af37;
         position: relative;
         z-index: 10;
-        animation: floatUp 0.8s ease-out;
+        animation: cardFlip 0.6s ease-out;
     }
-    @keyframes floatUp {
-        from { transform: translateY(50px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+    @keyframes cardFlip {
+        0% { transform: rotateY(90deg) scale(0.8); opacity: 0; }
+        100% { transform: rotateY(0deg) scale(1); opacity: 1; }
     }
 
     /* Kart Dokusu */
@@ -101,7 +132,7 @@ st.markdown("""
     .mini-photo-frame {
         width: 110px;
         height: 110px;
-        margin: -60px auto 20px auto; /* Kartın üstünden taşması için negatif margin */
+        margin: -60px auto 20px auto;
         border-radius: 50%;
         border: 4px solid #d4af37;
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -114,6 +145,18 @@ st.markdown("""
         width: 100%; 
         height: 100%; 
         object-fit: cover; 
+    }
+
+    /* Placeholder Image */
+    .mini-photo-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #be123c, #db2777);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        color: white;
     }
 
     /* Metinler */
@@ -145,13 +188,18 @@ st.markdown("""
         position: absolute;
         bottom: -40px;
         right: -30px;
-        width: 150px; /* Sticker Boyutu */
+        width: 150px;
         height: auto;
-        z-index: 50; /* En üstte */
+        z-index: 50;
         filter: drop-shadow(5px 10px 8px rgba(0,0,0,0.3));
         transform: rotate(-10deg);
         transition: transform 0.3s;
-        pointer-events: none; /* Tıklamayı engelle */
+        pointer-events: none;
+        animation: stickerBounce 2s ease-in-out infinite;
+    }
+    @keyframes stickerBounce {
+        0%, 100% { transform: rotate(-10deg) translateY(0px); }
+        50% { transform: rotate(-10deg) translateY(-5px); }
     }
 
     /* Butonlar */
@@ -166,10 +214,14 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(190, 18, 60, 0.4);
         width: 100%;
         margin-top: 20px;
+        transition: all 0.3s ease;
     }
     .stButton>button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(190, 18, 60, 0.6);
+    }
+    .stButton>button:active {
+        transform: translateY(0px);
     }
     
     /* Müzik Player */
@@ -187,46 +239,76 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif;
         font-size: 14px;
         color: #be123c;
+        transition: all 0.3s ease;
+    }
+    .music-box:hover {
+        transform: translateX(-50%) scale(1.05);
+    }
+
+    /* Oyun Sonu Özeti */
+    .game-summary {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 20px;
+        border: 3px solid #d4af37;
+        text-align: center;
+        box-shadow: 0 15px 40px rgba(190, 18, 60, 0.25);
+        animation: fadeIn 1s ease-in;
+        margin-top: 30px;
+    }
+    .summary-title {
+        font-family: 'Cinzel Decorative', cursive;
+        color: #be123c;
+        font-size: 32px;
+        margin-bottom: 20px;
+    }
+    .summary-stat {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 18px;
+        color: #555;
+        margin: 10px 0;
+    }
+
+    /* Mobil Responsive */
+    @media (max-width: 768px) {
+        .start-title { font-size: 28px; }
+        .card-content-text { font-size: 18px; }
+        .sticker-3d { width: 100px; bottom: -30px; right: -20px; }
+        .mini-photo-frame { width: 90px; height: 90px; margin: -50px auto 15px auto; }
     }
 </style>
 """, unsafe_allow_html=True)
 
 # --- YARDIMCI FONKSİYONLAR ---
 def get_image_base64(filename):
-    # Dosya uzantılarını kontrol et
-    possible_files = [filename, filename.replace(".png", ".jpg"), filename.replace(".jpg", ".png")]
-    found_file = None
-    for f in possible_files:
-        if os.path.exists(f):
-            found_file = f
-            break
+    """Görsel dosyasını base64'e çevirir, bulamazsa None döner"""
+    possible_extensions = ['.png', '.jpg', '.jpeg', '.webp']
+    base_name = Path(filename).stem
     
-    if not found_file: return "" 
-    
-    with open(found_file, "rb") as f: encoded = base64.b64encode(f.read()).decode()
-    ext = found_file.split('.')[-1]
-    return f"data:image/{ext};base64,{encoded}"
+    for ext in possible_extensions:
+        filepath = f"{base_name}{ext}"
+        if os.path.exists(filepath):
+            try:
+                with open(filepath, "rb") as f:
+                    encoded = base64.b64encode(f.read()).decode()
+                return f"data:image/{ext[1:]};base64,{encoded}"
+            except Exception as e:
+                st.warning(f"Görsel yüklenirken hata: {filepath}")
+                return None
+    return None
 
-# --- GÖRSELLERİ YÜKLE ---
-# Sticker ve Minik fotoğraflar için dosyalar
-img_sticker_busra = get_image_base64("busra.png") 
-img_sticker_kerem = get_image_base64("kerem.png") 
-img_sticker_biz = get_image_base64("biz.png")
+def create_placeholder_image(emoji="💕"):
+    """Görsel yoksa emoji placeholder döner"""
+    return f'<div class="mini-photo-placeholder">{emoji}</div>'
 
-# Minik madalyonlar için (Aynılarını kullanıyoruz)
-img_mini_busra = get_image_base64("busra.png") 
-img_mini_kerem = get_image_base64("kerem.png")
-img_mini_biz = get_image_base64("biz.png")
+def reset_game():
+    """Tüm oyun durumunu sıfırlar"""
+    for key in ['game_state', 'current_player', 'pending_card', 'current_card', 'deck', 'cards_drawn']:
+        if key in st.session_state:
+            del st.session_state[key]
 
-# --- OYUN DURUMU (SESSION STATE) ---
-if 'game_state' not in st.session_state:
-    st.session_state.game_state = 'START' 
-if 'current_player' not in st.session_state:
-    st.session_state.current_player = None 
-if 'pending_card' not in st.session_state:
-    st.session_state.pending_card = None
-if 'deck' not in st.session_state:
-    # --- 64 KARTLIK DESTE (Target eklenmiş halde) ---
+def init_deck():
+    """Desteyi oluşturur ve karıştırır"""
     raw_deck = [
         # SAYFA 1: KADER & BAŞLANGIÇ
         {"type": "SORU (BÜŞRA)", "target": "Busra", "text": "Aksaray'daki o seminerde masana kedi atladığında attığın o çığlığı hatırla... O gün kediden kaçan Büşra'dan, bugün Lila ve Simba'ya annelik yapan Büşra'ya dönüşmek sence nasıl bir yolculuktu?"},
@@ -286,7 +368,7 @@ if 'deck' not in st.session_state:
         {"type": "GÖREV (ROMANTİZM)", "target": "Both", "text": "Bu sessiz ortamdaki imkanlarla yapabileceğin en romantik jesti yap."},
         {"type": "GÖREV (YASAK KELİME)", "target": "Both", "text": "Bana 'Seni seviyorum' cümlesini KURMADAN, beni sevdiğini 3 farklı şekilde ifade et."},
         {"type": "GÖREV (TANI)", "target": "Both", "text": "Gözlerini kapat, sadece burnuma ve yanağıma dokunarak yüzümü ellerinle tanı."},
-        {"type": "JOKER KARTI", "target": "Both", "text": "Bu kartı sakla! Oyunun herhangi bir yerinde zor bir soruyu veya görevi 'Pas' geçmek için kullanabilirsin."},
+        {"type": "JOKER KARTI", "target": "Both", "text": "🃏 Bu kartı sakla! Oyunun herhangi bir yerinde zor bir soruyu veya görevi 'Pas' geçmek için kullanabilirsin."},
 
         # SAYFA 7: ZİHİN OYUNLARI
         {"type": "İÇİNDEN OKU", "target": "Both", "text": "Bu kartta ne yazdığını SESLİ OKUMA. Sadece yüzüme bak, çapkın bir şekilde gülümse ve konuyu tamamen değiştir. (Beni meraktan çatlat)."},
@@ -308,8 +390,29 @@ if 'deck' not in st.session_state:
         {"type": "BÜYÜK İTİRAF", "target": "Both", "text": "'Bunu daha önce hiç söylemedim ama...' diye başlayan komik, ciddi veya şaşırtıcı bir itirafta bulun."},
         {"type": "FİNAL KARTI (YEMİN)", "target": "Both", "text": "Sağ elini kalbime koy. Bu 14 Şubat gecesi ve yıldızlar şahit olsun ki; [Bu cümleyi içinden geldiği gibi tamamla ve 25 Nisan için bana söz ver]."}
     ]
-    st.session_state.deck = raw_deck
+    return raw_deck
+
+# --- GÖRSELLERİ YÜKLE ---
+img_sticker_busra = get_image_base64("busra")
+img_sticker_kerem = get_image_base64("kerem")
+img_sticker_biz = get_image_base64("biz")
+
+img_mini_busra = get_image_base64("busra")
+img_mini_kerem = get_image_base64("kerem")
+img_mini_biz = get_image_base64("biz")
+
+# --- OYUN DURUMU (SESSION STATE) ---
+if 'game_state' not in st.session_state:
+    st.session_state.game_state = 'START'
+if 'current_player' not in st.session_state:
+    st.session_state.current_player = None
+if 'pending_card' not in st.session_state:
+    st.session_state.pending_card = None
+if 'deck' not in st.session_state:
+    st.session_state.deck = init_deck()
     random.shuffle(st.session_state.deck)
+if 'cards_drawn' not in st.session_state:
+    st.session_state.cards_drawn = 0
 
 # --- ANA OYUN AKIŞI ---
 
@@ -319,9 +422,10 @@ if st.session_state.game_state == 'START':
     
     st.markdown(f"""
     <div class='start-screen-box'>
-        <div class='start-title'>HAZIR MISINIZ?</div>
-        <div style='font-size: 20px; color: #555; font-family: "Montserrat";'>14 Şubat Gecesi Başlıyor...</div>
-        <div style='margin-top:20px; font-size: 14px; color: #be123c;'>Road to 25 April</div>
+        <div class='start-title'>💕 HAZIR MISINIZ? 💕</div>
+        <div style='font-size: 20px; color: #555; font-family: "Montserrat"; margin: 15px 0;'>14 Şubat Gecesi Başlıyor...</div>
+        <div style='margin-top:20px; font-size: 16px; color: #be123c; font-weight: 600;'>Road to 25 April</div>
+        <div style='margin-top:10px; font-size: 14px; color: #888;'>64 kart • Sonsuz anı • 1 aşk hikayesi</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -331,7 +435,9 @@ if st.session_state.game_state == 'START':
         winner = random.choice(["Kerem", "Büşra"])
         st.session_state.current_player = winner
         st.session_state.game_state = 'PLAYING'
-        st.rerun() # DÜZELTİLDİ
+        st.success(f"🎊 {winner} başlıyor!")
+        time.sleep(1)
+        st.rerun()
 
 # 2. PASLAŞMA EKRANI (Handover)
 elif st.session_state.game_state == 'HANDOVER':
@@ -349,26 +455,40 @@ elif st.session_state.game_state == 'HANDOVER':
     </div>
     """, unsafe_allow_html=True)
     
-    if st.button(f"Telefonu Aldım ({target_person}) ✅"):
+    if st.button(f"✅ Telefonu Aldım ({target_person})"):
         st.session_state.current_player = target_person
         st.session_state.current_card = st.session_state.pending_card
         st.session_state.game_state = 'PLAYING'
-        st.rerun() # DÜZELTİLDİ
+        st.rerun()
 
 # 3. OYUN EKRANI (Playing)
 elif st.session_state.game_state == 'PLAYING':
     
     player = st.session_state.current_player
+    total_cards = 64
     remaining = len(st.session_state.deck)
+    progress = ((total_cards - remaining) / total_cards) * 100
+    
+    # İlerleme Barı
+    st.markdown(f"""
+    <div class='progress-container'>
+        <div class='progress-bar' style='width: {progress}%'></div>
+        <div class='progress-text'>İlerleme: {total_cards - remaining}/{total_cards} kart çekildi</div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Başlık
-    st.markdown("<h2 style='text-align: center; color: #be123c; font-family: \"Cinzel Decorative\"; margin-top: -30px;'>ROAD TO 25 APRIL 💍</h2>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align:center; color:#777; font-size:14px;'>Sıra: <b>{player.upper()}</b> | Kalan: {remaining}</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #be123c; font-family: \"Cinzel Decorative\"; margin-top: 10px;'>ROAD TO 25 APRIL 💍</h2>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align:center; color:#777; font-size:14px;'>Sıra: <b style='color:#be123c;'>{player.upper()}</b> | Kalan: <b>{remaining}</b></p>", unsafe_allow_html=True)
 
     if remaining > 0:
         if st.button(f"✨ Kart Çek ({player}) ✨"):
+            with st.spinner("Kart hazırlanıyor..."):
+                time.sleep(0.5)
+            
             card = st.session_state.deck.pop()
             st.session_state.pending_card = card
+            st.session_state.cards_drawn += 1
             
             # Paslaşma Mantığı
             if player == "Kerem" and card['target'] == "Kerem":
@@ -378,29 +498,43 @@ elif st.session_state.game_state == 'PLAYING':
             else:
                 st.session_state.current_card = card
             
-            st.rerun() # DÜZELTİLDİ
+            st.rerun()
             
         # Kartı Göster
         if 'current_card' in st.session_state:
             card = st.session_state.current_card
             
             # Görsel Seçimi
-            mini_photo = img_mini_biz
+            mini_photo_html = ""
             sticker_html = ""
             
             if card['target'] == "Busra":
-                mini_photo = img_mini_busra
+                if img_mini_busra:
+                    mini_photo_html = f'<img src="{img_mini_busra}">'
+                else:
+                    mini_photo_html = create_placeholder_image("👰")
                 if img_sticker_busra:
                     sticker_html = f'<img src="{img_sticker_busra}" class="sticker-3d">'
             elif card['target'] == "Kerem":
-                mini_photo = img_mini_kerem
-                # İstersen Kerem için de sticker ekle, şimdilik boş
+                if img_mini_kerem:
+                    mini_photo_html = f'<img src="{img_mini_kerem}">'
+                else:
+                    mini_photo_html = create_placeholder_image("🤵")
+                if img_sticker_kerem:
+                    sticker_html = f'<img src="{img_sticker_kerem}" class="sticker-3d">'
+            else:  # Both
+                if img_mini_biz:
+                    mini_photo_html = f'<img src="{img_mini_biz}">'
+                else:
+                    mini_photo_html = create_placeholder_image("💑")
+                if img_sticker_biz:
+                    sticker_html = f'<img src="{img_sticker_biz}" class="sticker-3d">'
             
             # HTML Kart
             st.markdown(f"""
             <div class="card-wrapper">
                 <div class="white-card-box">
-                    <div class="mini-photo-frame"><img src="{mini_photo}"></div>
+                    <div class="mini-photo-frame">{mini_photo_html}</div>
                     <div class="card-title-text">{card['type']}</div>
                     <div class="card-content-text">{card['text']}</div>
                 </div>
@@ -408,29 +542,63 @@ elif st.session_state.game_state == 'PLAYING':
             </div>
             """, unsafe_allow_html=True)
             
+            # Özel kart uyarıları
             if "İÇİNDEN OKU" in card['type']:
                 st.toast("🤫 Şşş! Bu kartı sesli okuma!", icon="🤫")
+            elif "JOKER" in card['type']:
+                st.toast("🃏 Joker kartını sakla, sonra kullanabilirsin!", icon="🃏")
             
             st.markdown("---")
-            if st.button("Sırayı Devret 🔄"):
-                new_player = "Büşra" if player == "Kerem" else "Kerem"
-                st.session_state.current_player = new_player
-                if 'current_card' in st.session_state:
-                    del st.session_state.current_card
-                st.rerun() # DÜZELTİLDİ
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🔄 Sırayı Devret"):
+                    new_player = "Büşra" if player == "Kerem" else "Kerem"
+                    st.session_state.current_player = new_player
+                    if 'current_card' in st.session_state:
+                        del st.session_state.current_card
+                    st.rerun()
+            
+            with col2:
+                if st.button("🔀 Desteyi Karıştır"):
+                    random.shuffle(st.session_state.deck)
+                    st.success("Deste karıştırıldı!")
+                    time.sleep(0.5)
+                    st.rerun()
 
     else:
+        # OYUN SONU
         st.balloons()
-        st.success("Tüm kartlar bitti! İyi ki varsın Büşra. ❤️")
-        if st.button("Baştan Oyna"):
-             del st.session_state.deck
-             st.rerun()
+        
+        st.markdown(f"""
+        <div class='game-summary'>
+            <div class='summary-title'>🎊 OYUN BİTTİ! 🎊</div>
+            <div style='font-size: 18px; color: #555; font-family: "Lora"; font-style: italic; margin: 20px 0;'>
+                "64 kart, sonsuz anı, tek bir aşk hikayesi..."
+            </div>
+            <div class='summary-stat'>📊 Toplam çekilen kart: <b>{st.session_state.cards_drawn}</b></div>
+            <div class='summary-stat'>💕 Paylaşılan anılar: <b>Paha biçilemez</b></div>
+            <div class='summary-stat'>⏰ Bir adım daha yaklaştınız: <b>25 Nisan 2026</b></div>
+            <div style='margin-top: 30px; font-size: 24px; color: #be123c; font-family: "Cinzel Decorative";'>
+                İyi ki varsın Büşra ❤️
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🔄 Yeniden Başla"):
+                reset_game()
+                st.rerun()
+        with col2:
+            if st.button("📸 Anı Defterine Kaydet"):
+                st.info("Bu özellik yakında eklenecek!")
 
 # --- MÜZİK KUTUSU ---
 st.markdown("""
 <div class='music-box'>
     <a href="https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M" target="_blank" style="text-decoration:none; color:#be123c;">
-        ♫ Romantik Müzik Aç ♫
+        🎵 Romantik Müzik Aç 🎵
     </a>
 </div>
 """, unsafe_allow_html=True)
