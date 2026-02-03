@@ -1,78 +1,147 @@
 import streamlit as st
 import random
+import time
 
-# Sayfa Ayarları
+# --- SAYFA AYARLARI (PREMIUM) ---
 st.set_page_config(
-    page_title="Road to 25 April",
-    page_icon="💍",
-    layout="centered"
+    page_title="Road to 25 April | Elite Edition",
+    page_icon="💖",
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-# Özel CSS (Romantik Tasarım - 14 Şubat Teması)
+# --- GÖRSEL YÜKLEME FONKSİYONU ---
+# (Eğer fotoğraflar yoksa hata vermesin diye try-except bloğu)
+def show_image(image_name, caption_text=None):
+    try:
+        st.image(image_name, caption=caption_text, use_column_width=True)
+    except Exception:
+        st.warning(f"⚠️ '{image_name}' fotoğrafı bulunamadı. Lütfen GitHub'a yüklediğinden emin ol.")
+
+# --- ÖZEL CSS (ELITE TASARIM & ANİMASYON) ---
 st.markdown("""
 <style>
+    /* Google Fonts İçe Aktarma (Daha sofistike fontlar) */
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Lora:ital,wght@0,500;1,400&display=swap');
+
+    /* Ana Arka Plan - Romantik Gradyan */
     .stApp {
-        background-color: #fff0f5; /* Lavender Blush - Çok hafif pembe */
+        background: linear-gradient(to bottom right, #fff0f5, #ffe4e1);
     }
+
+    /* KART ANİMASYONU (Alttan süzülerek gelme) */
+    @keyframes slideInUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* KART KONTEYNERİ (Lüks Görünüm) */
     .card-container {
-        background-color: white;
+        animation: slideInUp 0.8s ease-out; /* Animasyon burada */
+        background-color: #ffffff;
         padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        border-radius: 25px;
+        /* Derinlik hissi veren güçlü gölge */
+        box-shadow: 0 20px 40px rgba(190, 18, 60, 0.2);
         text-align: center;
-        border: 2px solid #be123c; /* Koyu Kırmızı Çerçeve */
+        /* Altın Sarısı Çerçeve */
+        border: 3px solid #d4af37; 
         margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
     }
+    
+    /* Kartın üstüne ince bir parlama efekti */
+    .card-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 10px;
+        background: linear-gradient(to right, #be123c, #d4af37, #be123c);
+    }
+
+    /* KART BAŞLIĞI (Altın & Cinzel Font) */
     .card-title {
-        color: #be123c;
-        font-family: 'Helvetica Neue', sans-serif;
-        font-size: 20px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        letter-spacing: 2px;
+        color: #d4af37; /* Altın Rengi */
+        font-family: 'Cinzel Decorative', cursive;
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 25px;
+        letter-spacing: 1px;
         text-transform: uppercase;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
+
+    /* KART İÇERİĞİ (Lora Font) */
     .card-content {
-        color: #374151;
+        color: #4b5563;
         font-size: 24px;
-        line-height: 1.6;
+        line-height: 1.7;
         font-weight: 500;
-        font-family: 'Georgia', serif; /* Daha şık, kitap gibi bir font */
+        font-family: 'Lora', serif;
+        font-style: italic;
     }
+
+    /* ALT BİLGİ */
     .footer-text {
         color: #9ca3af;
         font-size: 14px;
         text-align: center;
-        margin-top: 50px;
-        font-style: italic;
+        margin-top: 60px;
+        font-family: 'Cinzel Decorative', cursive;
     }
+
+    /* SAYAÇ */
     .counter {
         color: #be123c;
         font-weight: bold;
         text-align: center;
-        margin-bottom: 10px;
+        margin-bottom: 20px;
+        font-family: 'Cinzel Decorative', cursive;
     }
-    /* Buton tasarımı */
+
+    /* BUTON TASARIMI (Lüks Buton) */
     .stButton>button {
-        background-color: #be123c;
+        background: linear-gradient(45deg, #be123c, #9f1239);
         color: white;
-        border-radius: 10px;
-        height: 50px;
-        font-size: 18px;
-        border: none;
+        border-radius: 50px; /* Daha yuvarlak */
+        height: 60px;
+        font-size: 20px;
+        font-weight: bold;
+        border: 2px solid #d4af37; /* Altın çerçeveli buton */
+        box-shadow: 0 5px 15px rgba(190, 18, 60, 0.3);
+        transition: all 0.3s ease;
     }
     .stButton>button:hover {
-        background-color: #9f1239;
-        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(190, 18, 60, 0.5);
+        background: linear-gradient(45deg, #9f1239, #be123c);
     }
+    
+    /* Fotoğrafların kenarlarını yumuşat */
+    img {
+        border-radius: 15px;
+        border: 2px solid #d4af37;
+        margin-bottom: 20px;
+    }
+    
 </style>
 """, unsafe_allow_html=True)
 
-# Başlık Kısmı
-st.markdown("<h1 style='text-align: center; color: #be123c;'>ROAD TO 25 APRIL 💍</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #6b7280;'>Kerem & Büşra | 14 Şubat Özel ❤️</p>", unsafe_allow_html=True)
+# --- BAŞLIK ---
+st.markdown("<h1 style='text-align: center; color: #be123c; font-family: \"Cinzel Decorative\", cursive; font-size: 3rem;'>ROAD TO 25 APRIL</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #d4af37; font-family: \"Lora\", serif; font-style: italic;'>Kerem & Büşra | 14 Şubat Elite Edition ⚜️</p>", unsafe_allow_html=True)
+st.divider()
 
-# --- KART LİSTESİ (64 ADET - 14 ŞUBAT REVIZESI) ---
+# --- KART LİSTESİ (64 ADET - DEĞİŞMEDİ) ---
 if 'deck' not in st.session_state:
     st.session_state.deck = [
         # SAYFA 1: KADER & BAŞLANGIÇ
@@ -155,46 +224,67 @@ if 'deck' not in st.session_state:
         {"type": "BÜYÜK İTİRAF", "text": "'Bunu daha önce hiç söylemedim ama...' diye başlayan komik, ciddi veya şaşırtıcı bir itirafta bulun."},
         {"type": "FİNAL KARTI (YEMİN)", "text": "Sağ elini kalbime koy. Bu 14 Şubat gecesi ve yıldızlar şahit olsun ki; [Bu cümleyi içinden geldiği gibi tamamla ve 25 Nisan için bana söz ver]."}
     ]
-    # Listeyi karıştır
     random.shuffle(st.session_state.deck)
 
-# Kalan kart sayısı
+# --- OYUN MANTIĞI VE GÖRSELLEŞTİRME ---
 remaining = len(st.session_state.deck)
 
-# --- ANA EKRAN ---
-
-# Eğer kart bittiyse
 if remaining == 0:
     st.balloons()
-    st.success("Tüm kartlar bitti! İyi ki varsın Büşra. ❤️")
+    st.success("Tüm kartlar bitti! İyi ki varsın Büşra. Sonsuza kadar... ❤️")
     if st.button("Oyunu Yeniden Başlat 🔄"):
         del st.session_state.deck
         st.experimental_rerun()
 else:
-    st.markdown(f"<p class='counter'>Kalan Kart: {remaining}/64</p>", unsafe_allow_html=True)
+    st.markdown(f"<p class='counter'>Kalan Kart: {remaining}/64 ⚜️</p>", unsafe_allow_html=True)
 
-    # KART ÇEKME BUTONU
-    if st.button("Bir Kart Çek 🃏", use_container_width=True):
-        # Listeden bir kart al ve çıkar (pop)
+    # --- BUTON VE ANİMASYON EFEKTİ ---
+    if st.button("✨ Bir Kart Çek ✨", use_container_width=True):
+        with st.spinner("Kart seçiliyor..."):
+            time.sleep(0.6) # Animasyon için kısa bir bekleme
         card = st.session_state.deck.pop()
         st.session_state.current_card = card
     
-    # KARTI GÖSTER (Eğer çekildiyse)
+    # --- KARTI GÖSTERME ALANI ---
     if 'current_card' in st.session_state:
         card = st.session_state.current_card
         
-        # Kart Tipi ve İçeriği
-        html_code = f"""
+        # FOTOĞRAF MANTIĞI
+        # Kart tipine göre hangi fotoğrafın gösterileceğini belirle
+        photo_to_show = "biz.jpg" # Varsayılan fotoğraf
+        caption = None
+        
+        if "(BÜŞRA)" in card['type']:
+            photo_to_show = "busra.jpg"
+            caption = "Güzeller güzeli müstakbel eşime..."
+        elif "(KEREM)" in card['type']:
+            photo_to_show = "kerem.jpg"
+            caption = "Yakışıklı hocama bir soru..."
+        
+        # Kartın HTML yapısı (Animasyon sınıfı 'card-container' içinde)
+        html_structure = f"""
         <div class="card-container">
             <div class="card-title">{card['type']}</div>
             <div class="card-content">{card['text']}</div>
         </div>
         """
-        st.markdown(html_code, unsafe_allow_html=True)
         
-        # Eğer "İçinden Oku" kartıysa uyarı ver
+        # Önce Fotoğrafı, Sonra Kart Metnini Göster
+        # Not: HTML içine doğrudan resim gömmek yerine Streamlit'in image fonksiyonunu
+        # kullanıyoruz ki mobil uyumu daha iyi olsun.
+        with st.container():
+            st.markdown('<div class="card-container">', unsafe_allow_html=True)
+            st.markdown(f'<div class="card-title">{card["type"]}</div>', unsafe_allow_html=True)
+            
+            # Fotoğrafı göster (Hata kontrolü ile)
+            show_image(photo_to_show, caption)
+            
+            st.markdown(f'<div class="card-content">{card["text"]}</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # Uyarılar
         if "İÇİNDEN OKU" in card['type']:
-            st.warning("⚠️ DİKKAT: Bu kartı sesli okuma! İçinden oku ve yazanı yap.")
+            st.toast("🤫 Şşş! Bu kartı sesli okuma!", icon="🤫")
 
 # --- FOOTER ---
-st.markdown("<div class='footer-text'>For My Better Half, Büşra ❤️</div>", unsafe_allow_html=True)
+st.markdown("<div class='footer-text'>For My Better Half, Büşra | Road to 25 April ❤️</div>", unsafe_allow_html=True)
